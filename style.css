@@ -59,6 +59,18 @@ button:hover {
   background-color: #16384C;
 }
 
+/* 🔹 ESTILOS DE ESCALA / DIRECTO */
+.directo {
+  color: #1E4963;
+  font-weight: bold;
+}
+
+.escala {
+  color: #8B2E2E;
+  font-weight: bold;
+}
+
+/* 🔹 RESPONSIVE */
 @media (max-width: 480px) {
   .contenedor {
     font-size: 1.2em;
