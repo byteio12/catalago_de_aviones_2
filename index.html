@@ -12,6 +12,7 @@
     <h1>Selector Aleatorio de Aviones y Aeropuertos</h1>
     <div class="label" id="avion">Avión: ?</div>
     <div class="label" id="aeropuerto-inicial">Aeropuerto inicial: ?</div>
+    <div class="label" id="aeropuerto-escala">Escala: —</div>
     <div class="label" id="aeropuerto-cercano">Aeropuerto destino: ?</div>
     <div class="label" id="motor-info" style="display: none;">Motor: ?</div>
     <button id="boton-elegir">Elegir Aleatorios</button>
@@ -52,7 +53,6 @@ const aeropuertos_cercanos = {
 };
 
 const aviones_grandes = ['Boeing 777', 'Boeing 787', 'Airbus A350', 'MD-11'];
-
 const aviones2 = ['Boeing 777', 'Boeing 787', 'Airbus A350', 'Airbus A330', 'MD-11'];
 
 const aviones_pequenos = [
@@ -74,72 +74,87 @@ document.getElementById('boton-elegir').addEventListener('click', () => {
 
   let avion_elegido = elegirRandom(aviones_lista);
   let aeropuerto_inicial = "";
-  let aeropuerto_cercano = "";
+  let aeropuerto_destino = "";
+  let aeropuerto_escala = null;
 
-  // 🔹 AVIONES PEQUEÑOS (sin cambios)
+  // 🛩️ AVIONES PEQUEÑOS
   if (aviones_pequenos.includes(avion_elegido)) {
+    let aeropuertos_combinados =
+      aeropuertos_iniciales_grandes.concat(aeropuertos_iniciales_pequenos);
 
-    let aeropuertos_combinados = aeropuertos_iniciales_grandes.concat(aeropuertos_iniciales_pequenos);
     aeropuerto_inicial = elegirRandom(aeropuertos_combinados);
-
     let vecinos = aeropuertos_cercanos[aeropuerto_inicial] || [];
-    aeropuerto_cercano = vecinos.length > 0 ? elegirRandom(vecinos) : "Sin destino";
-
+    aeropuerto_destino = elegirRandom(vecinos.filter(v => v !== aeropuerto_inicial));
   }
 
-  // 🔹 AVIONES GRANDES (AQUÍ VA EL RANDOM DE ESCALA)
+  // ✈️ AVIONES GRANDES (pueden tener escala)
   else if (aviones_grandes.includes(avion_elegido)) {
 
-    let hayEscala = Math.floor(Math.random() * 2) + 1; // 1 o 2
+    let hayEscala = Math.floor(Math.random() * 2) + 1; // 1 = no, 2 = sí
 
-    let aeropuertos_grandes_validos = aeropuertos_iniciales_grandes.filter(
+    let aeropuertos_validos = aeropuertos_iniciales_grandes.filter(
       a => !['Southampton', 'Menorca', 'Paphos', 'Kittilä'].includes(a)
     );
 
-    aeropuerto_inicial = elegirRandom(aeropuertos_grandes_validos);
+    aeropuerto_inicial = elegirRandom(aeropuertos_validos);
+
+    let destinos_posibles = aeropuertos_validos.filter(a => a !== aeropuerto_inicial);
+    aeropuerto_destino = elegirRandom(destinos_posibles);
 
     if (hayEscala === 2) {
-      let posibles_cercanos = aeropuertos_grandes_validos.filter(a => a !== aeropuerto_inicial);
-      aeropuerto_cercano = posibles_cercanos.length > 0
-        ? elegirRandom(posibles_cercanos)
-        : "Sin escala";
-    } else {
-      aeropuerto_cercano = "Vuelo directo";
+      let escalas_posibles = destinos_posibles.filter(a => a !== aeropuerto_destino);
+      aeropuerto_escala = escalas_posibles.length > 0
+        ? elegirRandom(escalas_posibles)
+        : null;
     }
   }
 
-  // 🔹 OTROS AVIONES (sin cambios)
+  // ✈️ OTROS AVIONES
   else {
-
     aeropuerto_inicial = elegirRandom(aeropuertos_iniciales_grandes);
-    let posibles_cercanos = aeropuertos_iniciales_grandes.filter(a => a !== aeropuerto_inicial);
-    aeropuerto_cercano = posibles_cercanos.length > 0
-      ? elegirRandom(posibles_cercanos)
-      : "Sin destino";
+    aeropuerto_destino = elegirRandom(
+      aeropuertos_iniciales_grandes.filter(a => a !== aeropuerto_inicial)
+    );
   }
 
-  // 🔹 REGLA ESPECIAL PAPHOS (igual que antes)
-  if (['Paphos'].includes(aeropuerto_inicial) || ['Paphos'].includes(aeropuerto_cercano)) {
+  // 🔒 Regla especial Paphos
+  if ([aeropuerto_inicial, aeropuerto_destino, aeropuerto_escala].includes('Paphos')) {
     if (aviones2.includes(avion_elegido)) {
       avion_elegido = elegirRandom(aviones_exclusivos);
-      const exclusivos_validos = ['Menorca', 'Southampton'];
-      aeropuerto_inicial = elegirRandom(exclusivos_validos);
-      aeropuerto_cercano = elegirRandom(exclusivos_validos.filter(a => a !== aeropuerto_inicial));
+      const validos = ['Menorca', 'Southampton'];
+      aeropuerto_inicial = elegirRandom(validos);
+      aeropuerto_destino = elegirRandom(validos.filter(a => a !== aeropuerto_inicial));
+      aeropuerto_escala = null;
     }
   }
 
-  document.getElementById('avion').textContent = `Avión: ${avion_elegido}`;
-  document.getElementById('aeropuerto-inicial').textContent = `Aeropuerto inicial: ${aeropuerto_inicial}`;
-  document.getElementById('aeropuerto-cercano').textContent = `Aeropuerto destino: ${aeropuerto_cercano}`;
+  // 📺 MOSTRAR RESULTADOS
+  document.getElementById('avion').textContent =
+    `Avión: ${avion_elegido}`;
 
+  document.getElementById('aeropuerto-inicial').textContent =
+    `Aeropuerto inicial: ${aeropuerto_inicial}`;
+
+  const escalaLabel = document.getElementById('aeropuerto-escala');
+  if (aeropuerto_escala) {
+    escalaLabel.textContent = `Escala: ${aeropuerto_escala}`;
+    escalaLabel.style.display = "block";
+  } else {
+    escalaLabel.style.display = "none";
+  }
+
+  document.getElementById('aeropuerto-cercano').textContent =
+    `Aeropuerto destino: ${aeropuerto_destino}`;
+
+  // 🔧 Motor 757
   const motorInfo = document.getElementById('motor-info');
   if (avion_elegido === 'Boeing 757') {
-    const motores_757 = ['RB-211', 'PW2000'];
-    motorInfo.textContent = `Motor: ${elegirRandom(motores_757)}`;
+    motorInfo.textContent = `Motor: ${elegirRandom(['RB-211', 'PW2000'])}`;
     motorInfo.style.display = 'block';
   } else {
     motorInfo.style.display = 'none';
   }
+
 });
 </script>
 
